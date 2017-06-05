@@ -73,6 +73,7 @@ class Graph:
             print("")
 
 Solution = namedtuple("Solution", ["value", "edges"])
+AglutinatedSolution = namedtuple("AglutinatedSolution", ["value", "trips"])
 
 def load_graph(filename):
     graph = Graph()
@@ -109,6 +110,25 @@ def improve(solution, edges, graph):
                 best_solution = improved_solution
     return best_solution
 
+def aglutinate_solution(solution):
+    aglutinated = AglutinatedSolution(solution.value, {})
+
+    for edge in solution.edges:
+        if edge.target.id not in aglutinated.trips:
+            aglutinated.trips[edge.target.id] = []
+        aglutinated.trips[edge.target.id].append(edge.source.id)
+
+    return aglutinated
+
+def write_solution(filename, solution):
+    with open(filename, "w") as stream:
+        stream.write("%d %g\n" % (len(solution.trips), solution.value))
+
+        trips = sorted(solution.trips.items())
+        for driver, passengers in trips:
+            passengers.sort()
+            stream.write("%d %s\n" % (driver, " ".join(map(str, passengers))))
+
 def solve(graph):
     solution = Solution(0, set())
     edges = graph.edges
@@ -121,8 +141,6 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
     graph = load_graph(args.input)
-    solution = solve(graph)
+    solution = aglutinate_solution(solve(graph))
 
-    # print("Solution %g:" % solution.value)
-    # for edge in solution.edges:
-    #     print(edge)
+    write_solution(args.output, solution)
